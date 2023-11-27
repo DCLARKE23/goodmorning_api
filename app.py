@@ -13,8 +13,6 @@ class City(db.Model):
     name = db.Column(db.String(50), nullable = False)
 
 def get_weather(city):
-    if city is None or '':
-        abort(400, 'Invalid entry: null or empty string')
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid=" + WEATHER_API_KEY
     req = requests.get(url).json()
     return req
@@ -23,7 +21,7 @@ def get_weather(city):
 def get_cities():
     cities = City.query.all()
     weather_data = []
-    if cities is not None:
+    if len(cities) is not 0:
         for c in cities:
             r = get_weather(c.name)
             weather = {
