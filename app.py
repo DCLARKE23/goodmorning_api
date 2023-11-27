@@ -13,26 +13,38 @@ class City(db.Model):
     name = db.Column(db.String(50), nullable = False)
 
 def get_weather(city):
+    if city is None or '':
+        abort(400, 'Invalid entry: null or empty string')
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid=" + WEATHER_API_KEY
     req = requests.get(url).json()
     return req
 
-@app.route('/weather', methods=['GET'])
+def compile_weather_data(city): # helper function
+        r = get_weather(city.name)
+        weather = {
+            'city' : city.name,
+            'temperature' : r['main']['temp'],
+            'description' : r['weather'][0]['description'],
+            'icon' : r['weather'][0]['icon'],
+        }
+        return weather
+
+@app.route('/weather', methods=['GET']) # no id 
 def get_cities():
     cities = City.query.all()
     weather_data = []
-    if len(cities) is not 0:
-        for c in cities:
-            r = get_weather(c.name)
-            weather = {
-                'city' : c.name,
-                'temperature' : r['main']['temp'],
-                'description' : r['weather'][0]['description'],
-                'icon' : r['weather'][0]['icon'],
-            }
+    if len(cities) != 0:
+        for city in cities:
+            weather = compile_weather_data(city)
             weather_data.append(weather)
         return weather_data
     return "No cities: Add one to get started"
+
+@app.route('/weather/<int:id>', methods=['GET']) # get with specific id
+def get_specific_city(id):
+    city = City.query.get_or_404(id)
+    weather = compile_weather_data(city)
+    return weather
 
 @app.route('/weather', methods=['POST'])
 def add_city():
@@ -59,4 +71,4 @@ def del_city(weather_id):
     return "Location with ID: " + str(weather_id) + " removed."
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
