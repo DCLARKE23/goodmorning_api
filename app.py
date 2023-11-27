@@ -61,4 +61,4 @@ def del_city(weather_id):
     return "Location with ID: " + str(weather_id) + " removed."
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
