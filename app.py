@@ -97,7 +97,7 @@ def get_cities():
             weather = compile_weather_data(city)
             weather_data.append(weather)
         return weather_data
-    return "No cities: Add one to get started"
+    return []
 
 @app.route('/weather/<int:id>', methods=['GET']) # Get city with specific id
 def get_specific_city(id):
@@ -105,10 +105,15 @@ def get_specific_city(id):
     weather = compile_weather_data(city)
     return weather
 
+# TODO: account for invalid cities (non-existent cities)
 @app.route('/weather', methods=['POST'])
 def add_city():
     req_body = request.get_json(force=True)
     new_city = City(name=req_body.get('name'))
+    cities = City.query.all()
+    for c in cities:   # check for duplicate cities
+        if c.name == new_city.name:
+            return "City already exists"
     db.session.add(new_city)
     db.session.commit()
     return jsonify({"id": new_city.id, "name": new_city.name})
@@ -119,6 +124,9 @@ def update_city(weather_id):
     rows_counted = City.query.filter_by(id = weather_id).update(req_body)
     if rows_counted == 0: 
         abort(404)
+    for city in City.query.all():
+        if city.name == req_body.name:
+            return "Conflict with preexisting city"
     db.session.commit()
     return "Location with ID: " + str(weather_id) + " updated."
 
@@ -135,6 +143,7 @@ def get_links():
     links = Link.query.all()
     return jsonify(links)
 
+# TODO: find a way to test if link exists
 @app.route('/links', methods = ['POST'])
 def add_link():
     req_body = request.get_json(force=True)
