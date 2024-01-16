@@ -9,6 +9,7 @@ The functionality is as follows:
 UPCOMING CHANGES AND ADDITIONS:
 - Complete Unit Testing
     - Unit Testing for edge cases and bad input
+    - Add functionality to handle bad input
 - Swagger API Specification
 - Basic Frontend using v0
 - Host on Heroku or another similar platform
