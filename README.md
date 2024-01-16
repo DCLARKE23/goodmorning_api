@@ -7,8 +7,8 @@ The functionality is as follows:
 - Basic todo list management and bookmark management using SQL databases.
 
 UPCOMING CHANGES AND ADDITIONS:
-- Separate main functionality into different files for organization and neatness
 - Complete Unit Testing
+    - Unit Testing for edge cases and bad input
 - Swagger API Specification
 - Basic Frontend using v0
 - Host on Heroku or another similar platform

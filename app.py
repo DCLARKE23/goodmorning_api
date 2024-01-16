@@ -161,14 +161,14 @@ def update_link(link_id):
     if rows_counted == 0:
         abort(400)
     db.session.commit()
-    return "Link with ID:" + str(link_id) + " has been updated"
+    return "Link with ID:" + str(link_id) + " updated"
 
 @app.route('/links/<int:link_id>', methods = ['DELETE']) # TODO: double check
 def delete_link(link_id):
     selected_link = Link.query.get_or_404(link_id)
     db.session.delete(selected_link)
     db.session.commit()
-    return "Link with ID:" + str(link_id) + " has been deleted."
+    return "Link with ID:" + str(link_id) + " deleted."
 
 if __name__ == "__main__":
     app.run(debug=True)
