@@ -1,6 +1,6 @@
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import re, requests
+import re, requests, json
 from config import WEATHER_API_KEY
 from dataclasses import dataclass
 
@@ -41,7 +41,7 @@ class Link(db.Model):
     name = db.Column(db.String(50), nullable = False)
 
 # Task Functions
-@app.route('/tasks', methods=['GET'])   # for testing purposes
+@app.route('/tasks', methods=['GET'])   # for testing purposes, not strictly necessary
 def get_tasks():
     tasks = Task.query.all()
     return jsonify(tasks)
@@ -66,7 +66,7 @@ def update_task(task_id):
     req_body = request.get_json(force=True)
     rows_counted = Task.query.filter_by(id = task_id).update(req_body)
     if rows_counted == 0:
-        abort(404)
+        abort(404, 'Cannot update non-existent entry.')
     db.session.commit()
     return "Task with ID:" + str(task_id) + " has been updated."
 
@@ -76,9 +76,11 @@ def get_weather(city):
         abort(400, 'Invalid entry: null or empty string')
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid=" + WEATHER_API_KEY
     req = requests.get(url).json()
+    if (req['cod'] == '404'):
+        abort(400, 'City does not exist.')
     return req
 
-def compile_weather_data(city): # Helper function
+def compile_weather_data(city):
         r = get_weather(city.name)
         weather = {
             'city' : city.name,
@@ -88,7 +90,7 @@ def compile_weather_data(city): # Helper function
         }
         return weather
 
-@app.route('/weather', methods=['GET']) # Get all cities 
+@app.route('/weather', methods=['GET']) 
 def get_cities():
     cities = City.query.all()
     weather_data = []
@@ -99,21 +101,21 @@ def get_cities():
         return weather_data
     return []
 
-@app.route('/weather/<int:id>', methods=['GET']) # Get city with specific id
+@app.route('/weather/<int:id>', methods=['GET'])
 def get_specific_city(id):
     city = City.query.get_or_404(id)
     weather = compile_weather_data(city)
     return weather
 
-# TODO: account for invalid cities (non-existent cities)
 @app.route('/weather', methods=['POST'])
 def add_city():
     req_body = request.get_json(force=True)
     new_city = City(name=req_body.get('name'))
+    get_weather(new_city.name)   # check if city exists
     cities = City.query.all()
-    for c in cities:   # check for duplicate cities
+    for c in cities:    # duplicate cities check
         if c.name == new_city.name:
-            return "City already exists"
+            abort(400, 'Preexisting duplicate.')
     db.session.add(new_city)
     db.session.commit()
     return jsonify({"id": new_city.id, "name": new_city.name})
@@ -121,18 +123,19 @@ def add_city():
 @app.route('/weather/<int:weather_id>', methods=['PUT'])
 def update_city(weather_id):
     req_body = request.get_json(force=True)
+    get_weather(req_body['name'])
+    for city in City.query.all():
+        if city.name == req_body['name']:
+            abort(400, 'Preexisting duplicate.')
     rows_counted = City.query.filter_by(id = weather_id).update(req_body)
     if rows_counted == 0: 
-        abort(404)
-    for city in City.query.all():
-        if city.name == req_body.name:
-            return "Conflict with preexisting city"
+        abort(404, 'Cannot update Location that does not exist.')
     db.session.commit()
     return "Location with ID: " + str(weather_id) + " updated."
 
 @app.route('/weather/<int:weather_id>', methods=['DELETE'])
 def del_city(weather_id):
-    selected_city = City.query.get_or_404(weather_id)
+    selected_city = City.query.get_or_404(weather_id, 'Cannot delete non-existent entry.')
     db.session.delete(selected_city)
     db.session.commit()
     return "Location with ID: " + str(weather_id) + " removed."

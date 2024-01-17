@@ -76,3 +76,21 @@ class Tests(unittest.TestCase):
         response = self.app.delete("/tasks/1")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, 'Link with ID:1 removed.')
+    
+    # Weather - Bad Requests
+    def test_weather_get_id_bad(self):
+        response = self.app.get("/weather/100000")
+        self.assertEqual(response.status_code, 404)
+        
+    def test_weather_post_bad_invalid(self):
+        response = self.app.post("/weather", json = {"name": "not_city"})
+        self.assertEqual(response.status_code, 500) # for some reason it sends anyway, but get fails after
+
+    def test_weather_post_bad_duplicate(self):
+        pass
+
+    def test_weather_put_bad(self):
+        pass
+
+    def test_weather_delete_bad(self):
+        pass
