@@ -2,6 +2,10 @@ import unittest, json
 from flask import Flask
 from app import app
 
+
+# TODO: Some considerations
+# Make sure that the input is guaranteed to be good for the good inputs
+# Make sure that the input is guaranteed to be bad for the bad inputs
 class Tests(unittest.TestCase):
     def client(self):
         app.config['TESTING'] = True
@@ -21,12 +25,12 @@ class Tests(unittest.TestCase):
         self.assertEqual(response.json["id"], 1)
 
     def test_weather_post(self):
-        response = self.app.post("/weather", json={"name": "toronto"})
+        response = self.app.post("/weather", json={"name": "moscow"})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(json.loads(response.data)) # not sure if this works or is necessary
         
     def test_weather_put(self):
-        response = self.app.put("/weather/1", json={"name": "vancouver"})
+        response = self.app.put("/weather/1", json={"name": "lagos"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, 'Location with ID:1 updated.')
 
@@ -83,14 +87,27 @@ class Tests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         
     def test_weather_post_bad_invalid(self):
-        response = self.app.post("/weather", json = {"name": "not_city"})
-        self.assertEqual(response.status_code, 500) # for some reason it sends anyway, but get fails after
+        response = self.app.post("/weather", json = {"name": "fake"})
+        self.assertEqual(response.status_code, 404)
 
     def test_weather_post_bad_duplicate(self):
-        pass
+        first_entry = self.app.get("/weather/1")
+        response = self.app.post("/weather", json={"name": first_entry['name']})    # might not work
+        self.assertEqual(response.status_code, 400)
 
-    def test_weather_put_bad(self):
-        pass
+    def test_weather_put_bad_duplicate(self):
+        first_entry = self.app.get("/weather/1")
+        response = self.app.put("/weather/1", json={"name": first_entry['name']})
+        self.assertEqual(response.status_code, 400)
+    
+    def test_weather_put_bad_invalid(self):
+        response = self.app.put("/weather/1", json={"name": "fake"})
+        self.assertEqual(response.status_code, 404)
+    
+    def test_weather_put_bad_none(self):
+        response = self.app.put("/weather/10000", json={"name": "bridgetown"})
+        self.assertEqual(response.status_code, 404)
 
     def test_weather_delete_bad(self):
-        pass
+        response = self.app.delete("/weather/100000")
+        self.assertEqual(response.status_code, 404)

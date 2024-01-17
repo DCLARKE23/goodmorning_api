@@ -77,7 +77,7 @@ def get_weather(city):
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid=" + WEATHER_API_KEY
     req = requests.get(url).json()
     if (req['cod'] == '404'):
-        abort(400, 'City does not exist.')
+        abort(404, 'City does not exist.')
     return req
 
 def compile_weather_data(city):
@@ -133,11 +133,18 @@ def update_city(weather_id):
     db.session.commit()
     return "Location with ID: " + str(weather_id) + " updated."
 
+# TODO: Add functionality to change IDs of remaining entries so that no blank entries
+# occur before existing ones
 @app.route('/weather/<int:weather_id>', methods=['DELETE'])
 def del_city(weather_id):
     selected_city = City.query.get_or_404(weather_id, 'Cannot delete non-existent entry.')
     db.session.delete(selected_city)
     db.session.commit()
+    for city in City.query.all():   # might be horribly broken
+        if (city.id > weather_id):
+            city.id -= 1
+        if (len(City.query.all()) < weather_id):
+            break
     return "Location with ID: " + str(weather_id) + " removed."
 
 # Link Functions TODO: add get method if for no other reason than to test
