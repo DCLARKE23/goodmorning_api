@@ -49,14 +49,17 @@ def get_tasks():
 @app.route('/tasks', methods=['POST'])
 def add_task():
     req_body = request.get_json(force=True)
-    new_task = Task(task=req_body.get('task'), time=req_body.get('time')) # not sure if this works
+    new_task = Task(task=req_body.get('task'), time=req_body.get('time'))
+    for t in Task.query.all():
+        if t.task == new_task.task:
+            abort(400, "Task with that name already exists.")
     db.session.add(new_task)
     db.session.commit()
     return jsonify({"id": new_task.id, "task": new_task.task, "time": new_task.time})
 
 @app.route('/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    selected_task = Task.query.get_or_404(task_id)
+    selected_task = Task.query.get_or_404(task_id, 'Cannot delete non-existent entry')
     db.session.delete(selected_task)
     db.session.commit()
     return "Task with ID:" + str(task_id) + " has been deleted."
@@ -133,21 +136,15 @@ def update_city(weather_id):
     db.session.commit()
     return "Location with ID: " + str(weather_id) + " updated."
 
-# TODO: Add functionality to change IDs of remaining entries so that no blank entries
-# occur before existing ones
+
 @app.route('/weather/<int:weather_id>', methods=['DELETE'])
 def del_city(weather_id):
     selected_city = City.query.get_or_404(weather_id, 'Cannot delete non-existent entry.')
     db.session.delete(selected_city)
     db.session.commit()
-    for city in City.query.all():   # might be horribly broken
-        if (city.id > weather_id):
-            city.id -= 1
-        if (len(City.query.all()) < weather_id):
-            break
     return "Location with ID: " + str(weather_id) + " removed."
 
-# Link Functions TODO: add get method if for no other reason than to test
+# Link Functions
 @app.route('/links', methods=['GET'])   # for testing purposes
 def get_links():
     links = Link.query.all()
