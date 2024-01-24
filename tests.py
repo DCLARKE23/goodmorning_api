@@ -114,6 +114,15 @@ class Tests(unittest.TestCase):
     
     # Tasks - Bad Requests
     def test_tasks_post_bad(self):
-        pass
+        response = self.app.post("/tasks", json={"name": "clean", "time": 60})
+        self.assertEqual(response.status_code, 400)
+
+    def test_tasks_put_bad_invalid(self):
+        response = self.app.put("/links/1000000", json={"name": "doesn't really matter", "time": 10})
+        self.assertEqual(response.status_code, 404)
+    
+    def test_tasks_delete_bad(self):
+        response = self.app.delete("/links/1000000000")
+        self.assertEqual(response.status_code, 404)
 
     
