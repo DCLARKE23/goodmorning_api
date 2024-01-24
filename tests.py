@@ -111,3 +111,9 @@ class Tests(unittest.TestCase):
     def test_weather_delete_bad(self):
         response = self.app.delete("/weather/100000")
         self.assertEqual(response.status_code, 404)
+    
+    # Tasks - Bad Requests
+    def test_tasks_post_bad(self):
+        pass
+
+    

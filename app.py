@@ -150,13 +150,16 @@ def get_links():
     links = Link.query.all()
     return jsonify(links)
 
-# TODO: find a way to test if link exists
 @app.route('/links', methods = ['POST'])
 def add_link():
     req_body = request.get_json(force=True)
     new_link = Link(url = req_body.get('url'), name= req_body.get('name'))
-    if re.match(url_pattern, new_link.url) == None: # TODO: verify re.match return type
+    if re.match(url_pattern, new_link.url) == None:
         abort(400, "The URL entered is invalid.")
+    links = Link.query.all()
+    for l in links:
+        if l.url == new_link.url or l.name == new_link.name:
+            abort(400, 'Link already exists with that name or url.')
     db.session.add(new_link)
     db.session.commit()
     return jsonify({"id": new_link.id, "url": new_link.url, "name": new_link.name})
@@ -166,13 +169,15 @@ def update_link(link_id):
     req_body = request.get_json(force=True)
     rows_counted = Link.query.filter_by(id = link_id).update(req_body)
     if rows_counted == 0:
-        abort(400)
+        abort(400, 'Cannot update entry that does not exist')
+    if re.match(url_pattern, req_body['url']) == None:
+        abort(400, 'The URL you entered is invalid.')
     db.session.commit()
     return "Link with ID:" + str(link_id) + " updated"
 
-@app.route('/links/<int:link_id>', methods = ['DELETE']) # TODO: double check
+@app.route('/links/<int:link_id>', methods = ['DELETE'])
 def delete_link(link_id):
-    selected_link = Link.query.get_or_404(link_id)
+    selected_link = Link.query.get_or_404(link_id, 'Cannot delete link that does not exist.')
     db.session.delete(selected_link)
     db.session.commit()
     return "Link with ID:" + str(link_id) + " deleted."
