@@ -118,11 +118,39 @@ class Tests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_tasks_put_bad_invalid(self):
-        response = self.app.put("/links/1000000", json={"name": "doesn't really matter", "time": 10})
+        response = self.app.put("/tasks/1000000", json={"name": "doesn't really matter", "time": 10})
         self.assertEqual(response.status_code, 404)
     
     def test_tasks_delete_bad(self):
-        response = self.app.delete("/links/1000000000")
+        response = self.app.delete("/tasks/1000000000")
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.text, 'Cannot delete non-existent entry') # if this works update to suit
 
-    
+    # Links - Bad Requests
+    def test_links_post_bad_invalid(self):
+        response = self.app.post("/links", json={"url": "whatever doesn't matter", "name": "also doesn't matter"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.text, 'The URL entered is invalid.')
+
+    def test_links_post_bad_duplicate(self):
+        response = self.app.post("/links", json={"url": "google.com", "name": "Google"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.text, 'Link already exists with that name or url.')
+
+    def test_links_put_bad_invalid(self):
+        response = self.app.post("/links/100000", json={"url": "who cares", "name": "lol"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.text, 'Cannot update entry that does not exist')
+
+    def test_links_put_bad_invalid2(self):
+        response = self.app.post("/links/1", json={"url": "who cares", "name": "lol"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.text, 'The URL you entered is invalid.')
+
+    def test_links_delete_bad(self):
+        response = self.app.post("/links/100000")
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.text, 'Cannot delete link that does not exist.')
+
+if __name__ == '__main__':
+    unittest.main()
